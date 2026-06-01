@@ -1,0 +1,2190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家长争章积分系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #FF85A2;
+            --secondary: #8B93FF;
+            --accent: #FFD166;
+            --light: #F8F9FA;
+            --dark: #343A40;
+            --success: #06D6A0;
+            --danger: #EF476F;
+            --warning: #FF9E1F;
+            --info: #00bbf9;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', 'Yuanti SC', 'YouYuan', sans-serif;
+        }
+        
+        body {
+            background: url('https://images.unsplash.com/photo-1579546929662-711aa81148cf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            padding: 15px;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 12px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 3px dashed var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '✨';
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            font-size: 1.3rem;
+            animation: sparkle 2s infinite;
+        }
+        
+        header::after {
+            content: '🌟';
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            font-size: 1.3rem;
+            animation: sparkle 3s infinite 0.5s;
+        }
+        
+        @keyframes sparkle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        h1 {
+            color: var(--primary);
+            font-size: 1.9rem;
+            margin-bottom: 6px;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        h1::after {
+            content: '';
+            display: block;
+            width: 90px;
+            height: 3px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            margin: 4px auto;
+            border-radius: 2px;
+        }
+        
+        .subtitle {
+            color: var(--secondary);
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+        
+        .controls-row {
+            display: flex;
+            justify-content: center;
+            margin: 8px 0;
+        }
+        
+        .data-controls {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .data-btn {
+            padding: 6px 10px;
+            background-color: var(--success);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .data-btn.import {
+            background-color: var(--secondary);
+        }
+        
+        .data-btn.export {
+            background-color: var(--primary);
+        }
+        
+        .data-btn.template {
+            background-color: #9b5de5;
+        }
+        
+        .data-btn.delete-all {
+            background-color: var(--danger);
+        }
+        
+        .data-btn.customize {
+            background-color: var(--info);
+        }
+        
+        .data-btn.reset-points {
+            background-color: #f15bb5;
+        }
+        
+        .data-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .add-student {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .add-student input {
+            padding: 8px 14px;
+            border: 2px solid var(--primary);
+            border-radius: 40px 0 0 40px;
+            width: 220px;
+            font-size: 0.85rem;
+            outline: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .add-student button {
+            padding: 8px 16px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0 40px 40px 0;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .add-student button:hover {
+            background-color: #ff6b95;
+        }
+        
+        .students-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        
+        .student-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 300px;
+            border: 2px solid transparent;
+            background-image: linear-gradient(white, white), 
+                              linear-gradient(45deg, var(--primary), var(--secondary));
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+        }
+        
+        .student-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        
+        .student-name {
+            font-size: 0.95rem;
+            color: var(--dark);
+            margin-bottom: 5px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .points {
+            font-size: 0.85rem;
+            color: var(--secondary);
+            text-align: center;
+            margin-bottom: 5px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .pet-container {
+            height: 2.8cm;
+            width: 2.8cm;
+            margin: 5px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        .pet {
+            font-size: 2.8cm;
+            transition: all 0.5s;
+            line-height: 1;
+        }
+        
+        .pet-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: all 0.5s;
+        }
+        
+        /* 移除所有阶段的缩放效果，确保所有图片大小一致 */
+        .egg .pet-image,
+        .baby .pet-image,
+        .growing .pet-image,
+        .adult .pet-image,
+        .beautiful .pet-image {
+            transform: none;
+        }
+        
+        /* 保留漂亮神兽的发光效果 */
+        .beautiful .pet-image {
+            animation: glow 2s infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                filter: drop-shadow(0 0 5px rgba(239, 71, 111, 0.5));
+            }
+            to {
+                filter: drop-shadow(0 0 15px rgba(239, 71, 111, 0.8)) drop-shadow(0 0 20px rgba(239, 71, 111, 0.6));
+            }
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+            margin: 4px 0;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .progress {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s;
+        }
+        
+        .egg-progress {
+            background-color: #FFD166;
+        }
+        
+        .baby-progress {
+            background-color: #8B93FF;
+        }
+        
+        .growing-progress {
+            background-color: #FF85A2;
+        }
+        
+        .adult-progress {
+            background-color: #06D6A0;
+        }
+        
+        .beautiful-progress {
+            background: linear-gradient(90deg, #EF476F, #FFD166, #06D6A0, #118AB2);
+            background-size: 400% 400%;
+            animation: gradient 3s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        
+        .stage-info {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--dark);
+            margin-top: 4px;
+            min-height: 24px;
+            flex-shrink: 0;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+        
+        .action-buttons .customize {
+            background-color: var(--info);
+            color: white;
+        }
+        
+        .action-buttons .customize:hover {
+            background-color: #0099cc;
+        }
+        
+        .add-point-btn, .cancel-point-btn, .delete-student-btn {
+            flex: 1;
+            padding: 6px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        .add-point-btn {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .cancel-point-btn {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        .delete-student-btn {
+            background-color: var(--danger);
+            color: white;
+            flex: 0.5;
+        }
+        
+        .add-point-btn:hover {
+            background-color: #05b388;
+        }
+        
+        .delete-student-btn:hover {
+            background-color: #e43a5f;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            padding: 10px 16px;
+            background-color: var(--secondary);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: translateX(150%);
+            transition: transform 0.5s;
+            z-index: 1000;
+            font-size: 0.85rem;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 25px;
+            color: var(--secondary);
+            grid-column: 1 / -1;
+        }
+        
+        .empty-state p {
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+        }
+        
+        .empty-state .pet {
+            font-size: 3.5rem;
+            margin-bottom: 12px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 3px solid var(--primary);
+            position: relative;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .modal h2 {
+            color: var(--primary);
+            margin-bottom: 0;
+            font-size: 1.2rem;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--danger);
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: white;
+            transition: all 0.3s;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        
+        .modal-close:hover {
+            background: #d32f2f;
+            transform: scale(1.1);
+        }
+        
+        .modal p {
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        
+        .modal-btn {
+            padding: 7px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .modal-btn.confirm {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .modal-btn.cancel {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .modal-btn.danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .modal-btn.warning {
+            background-color: #f15bb5;
+            color: white;
+        }
+        
+        .file-input {
+            width: 100%;
+            padding: 7px;
+            margin: 6px 0;
+            border: 2px dashed var(--secondary);
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        .class-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            background-color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        
+        .class-title {
+            font-size: 1.1rem;
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        /* 旧的勋章图片上传样式不再使用，改为积分佐证样式 */
+
+        /* 加分项目模态框样式 */
+        .activity-section-title {
+            font-size: 0.95rem;
+            font-weight: bold;
+            margin: 8px 0 4px;
+            color: var(--secondary);
+        }
+
+        .activity-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            margin-bottom: 4px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .activity-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .activity-name {
+            font-weight: bold;
+            color: var(--dark);
+        }
+
+        .activity-meta {
+            font-size: 0.78rem;
+            color: #666;
+        }
+
+        .activity-actions {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .activity-evidences {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .evidence-thumb {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .evidence-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .evidence-delete {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            font-size: 10px;
+            line-height: 14px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .evidence-thumb:hover .evidence-delete {
+            opacity: 1;
+        }
+
+        .activity-add-btn {
+            padding: 4px 10px;
+            border: none;
+            border-radius: 6px;
+            background: var(--success);
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .activity-add-btn[disabled] {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .activity-cancel-btn {
+            padding: 4px 10px;
+            border: none;
+            border-radius: 6px;
+            background: var(--warning);
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .activity-cancel-btn[disabled] {
+            background: #eee;
+            color: #aaa;
+            cursor: not-allowed;
+        }
+        
+        @media (max-width: 768px) {
+            .students-container {
+                grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .controls-row {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .data-controls {
+                justify-content: center;
+            }
+            
+            .pet-container {
+                height: 110px;
+                width: 110px;
+            }
+            
+            .pet {
+                font-size: 110px;
+            }
+            
+            .pet-image {
+                width: 110px;
+                height: 110px;
+            }
+            
+            .preview-item img {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .student-card {
+                height: 280px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .students-container {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+            
+            .student-card {
+                padding: 10px;
+                height: 260px;
+            }
+            
+            .pet-container {
+                height: 100px;
+                width: 100px;
+            }
+            
+            .pet {
+                font-size: 100px;
+            }
+            
+            .pet-image {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .preview-item img {
+                width: 70px;
+                height: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>家长争章积分系统</h1>
+            <p class="subtitle">家校协同 - 家长积分争章，共建育人共同体！</p>
+            
+            <!-- 功能按钮 -->
+            <div class="controls-row">
+                <div class="data-controls">
+                    <button class="data-btn template" id="templateBtn">
+                        <i class="fas fa-download"></i> 模板
+                    </button>
+                    <button class="data-btn import" id="importBtn">
+                        <i class="fas fa-file-import"></i> 导入
+                    </button>
+                    <button class="data-btn export" id="exportBtn">
+                        <i class="fas fa-file-export"></i> 导出
+                    </button>
+                    <button class="data-btn reset-points" id="resetPointsBtn">
+                        <i class="fas fa-undo"></i> 清空积分
+                    </button>
+                    <button class="data-btn delete-all" id="deleteAllBtn">
+                        <i class="fas fa-trash"></i> 删除全部
+                    </button>
+                </div>
+            </div>
+        </header>
+        
+        <div class="class-header">
+            <div class="class-title" id="currentClassTitle">家长争章乐园</div>
+            <div class="student-count" id="studentCount">家长人数: 0</div>
+        </div>
+        
+        <div class="add-student">
+            <input type="text" id="studentName" placeholder="输入家长姓名...">
+            <button id="addStudentBtn">添加家长</button>
+        </div>
+        
+        <div class="students-container" id="studentsContainer">
+            <!-- 学生卡片将通过JavaScript动态生成 -->
+            <div class="empty-state">
+                <div class="pet">🏅</div>
+                <p>还没有家长，快添加第一位家长参与争章吧！</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 导入数据模态框 -->
+    <div class="modal" id="importModal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeImportModal">&times;</button>
+            <h2>导入Excel数据</h2>
+            <p style="font-size: 0.85rem; text-align: left; margin-bottom: 12px;">
+                支持导入本系统导出的 Excel，或使用“模板”下载标准格式。<br>
+                必填列：<strong>姓名</strong>（也支持“家长姓名”）；可选列：<strong>积分</strong>、各加分项目次数列。<br>
+                图片佐证无法通过 Excel 导入，导入后需重新上传。
+            </p>
+            <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls,.csv">
+            <div class="modal-actions">
+                <button class="modal-btn confirm" id="confirmImportBtn">确认导入</button>
+                <button class="modal-btn cancel" id="cancelImportBtn">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 删除确认模态框 -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeDeleteModal">&times;</button>
+            <h2 id="deleteModalTitle">确认删除</h2>
+            <p id="deleteModalMessage">您确定要删除吗？此操作不可撤销。</p>
+            <div class="modal-actions">
+                <button class="modal-btn confirm" id="confirmDeleteBtn">确认删除</button>
+                <button class="modal-btn cancel" id="cancelDeleteBtn">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 清空积分确认模态框 -->
+    <div class="modal" id="resetPointsModal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeResetPointsModal">&times;</button>
+            <h2>确认清空积分</h2>
+            <p id="resetPointsModalMessage">您确定要清空所有学生的积分吗？此操作不可撤销。</p>
+            <div class="modal-actions">
+                <button class="modal-btn warning" id="confirmResetPointsBtn">确认清空</button>
+                <button class="modal-btn cancel" id="cancelResetPointsBtn">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 家长积分佐证模态框 -->
+    <div class="modal" id="customizeModal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeCustomizeModal">&times;</button>
+            <h2 id="customizeModalTitle">积分佐证管理</h2>
+            <p id="customizeModalStudentName" style="text-align: center; color: var(--primary); font-weight: bold; margin-bottom: 12px;"></p>
+            <p style="font-size: 0.9rem; text-align: left;">
+                请为每个加分项目上传对应的图片佐证（不会在界面展示，仅用于记录与备查）。同一项目可上传多张图片。
+            </p>
+
+            <div id="evidenceListContainer">
+                <!-- 佐证上传列表由 JavaScript 动态生成 -->
+            </div>
+
+            <div class="modal-actions">
+                <button class="modal-btn cancel" id="cancelCustomizeBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 家长加分项目选择模态框 -->
+    <div class="modal" id="activityModal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeActivityModal">&times;</button>
+            <h2>选择加分项目</h2>
+            <p id="activityModalStudentName" style="text-align: center; margin-bottom: 10px; font-size: 0.9rem; color: var(--primary); font-weight: bold;"></p>
+            <p style="font-size: 0.85rem; text-align: left;">
+                请选择本次加分的具体项目。带有“每学期一次”说明的项目，同一位家长在一个积分周期内只能加一次，如需重新统计，可重置积分重新开始。
+            </p>
+
+            <div id="activityListContainer">
+                <!-- 加分项目列表将由 JavaScript 动态生成 -->
+            </div>
+
+            <div class="modal-actions">
+                <button class="modal-btn cancel" id="cancelActivityBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 佐证大图预览模态框 -->
+    <div class="modal" id="imagePreviewModal">
+        <div class="modal-content" style="max-width: 90%; max-height: 90vh; display: flex; flex-direction: column; align-items: center;">
+            <button class="modal-close" id="closeImagePreviewModal">&times;</button>
+            <img id="previewEvidenceImage" src="" alt="佐证预览" style="max-width: 100%; max-height: 80vh; border-radius: 8px;">
+        </div>
+    </div>
+    
+    <!-- 通知区域 -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // 学生数据存储 - 简化为一个数组（此处的 students 实际指家长）
+        let students = [];
+        
+        // 删除操作类型
+        let deleteType = ''; // 'all' 或 'student'
+        let deleteIndex = -1; // 删除学生的索引
+        
+        // 当前正在自定义的学生索引
+        let currentCustomizeIndex = -1;
+
+        // 当前正在加分的家长索引
+        let currentActivityIndex = -1;
+        
+        // 家长加分项目配置
+        const activities = [
+            // 1. 家长微课堂系列
+            {
+                id: 'micro_moral_class',
+                category: '家长微课堂系列',
+                name: '到校给班级学生上思想道德教育课',
+                recordKey: '思想道德课次数',
+                points: 10,
+                unit: '节',
+                limit: 'multiple'
+            },
+            {
+                id: 'expert_training',
+                category: '家长微课堂系列',
+                name: '参加镇或学校组织的专家/导师家庭教育培训课程',
+                recordKey: '专家培训次数',
+                points: 5,
+                unit: '节',
+                limit: 'multiple'
+            },
+            {
+                id: 'online_training',
+                category: '家长微课堂系列',
+                name: '接受线上家庭教育培训课程',
+                recordKey: '线上培训次数',
+                points: 2,
+                unit: '节',
+                limit: 'multiple'
+            },
+            // 2. 亲子共育活动系列
+            {
+                id: 'big_event',
+                category: '亲子共育活动系列',
+                name: '积极到校参与大型活动（体艺节、科技节、农耕节、研学等）',
+                recordKey: '大型活动次数',
+                points: 10,
+                unit: '次',
+                limit: 'multiple'
+            },
+            {
+                id: 'parent_meeting',
+                category: '亲子共育活动系列',
+                name: '参加家长会',
+                recordKey: '家长会次数',
+                points: 5,
+                unit: '次',
+                limit: 'multiple'
+            },
+            {
+                id: 'parent_club',
+                category: '亲子共育活动系列',
+                name: '参加家长俱乐部（爸爸足球队、妈妈合唱团等）',
+                recordKey: '家长俱乐部次数',
+                points: 10,
+                unit: '次',
+                limit: 'multiple'
+            },
+            // 3. 志愿支援活动系列
+            {
+                id: 'safety_guard',
+                category: '志愿支援活动系列',
+                name: '参与放学护畅队',
+                recordKey: '护畅队次数',
+                points: 2,
+                unit: '次',
+                limit: 'multiple'
+            },
+            {
+                id: 'meal_support',
+                category: '志愿支援活动系列',
+                name: '参与家长配餐活动',
+                recordKey: '配餐活动次数',
+                points: 2,
+                unit: '次',
+                limit: 'multiple'
+            },
+            {
+                id: 'river_check',
+                category: '志愿支援活动系列',
+                name: '参与防溺水河段巡查队',
+                recordKey: '防溺水巡查次数',
+                points: 2,
+                unit: '次',
+                limit: 'multiple'
+            },
+            {
+                id: 'publicity',
+                category: '志愿支援活动系列',
+                name: '参与禁毒、扫黄打非等学生教育宣传工作',
+                recordKey: '禁毒宣传次数',
+                points: 2,
+                unit: '次',
+                limit: 'multiple'
+            },
+            {
+                id: 'wechat_post',
+                category: '志愿支援活动系列',
+                name: '班级微信推送发稿宣传',
+                recordKey: '微信推送次数',
+                points: 2,
+                unit: '次',
+                limit: 'multiple'
+            },
+            // 4. 读书共成长活动系列
+            {
+                id: 'read_book',
+                category: '读书共成长活动系列',
+                name: '亲子共读一本书，孩子有成果呈现（比赛获奖、读书笔记等）',
+                recordKey: '共读一本书次数',
+                points: 5,
+                unit: '次',
+                limit: 'multiple'
+            },
+            {
+                id: 'watch_movie',
+                category: '读书共成长活动系列',
+                name: '亲子共看一部有教育意义的电影（有照片佐证）',
+                recordKey: '共看电影次数',
+                points: 2,
+                unit: '次',
+                limit: 'multiple'
+            },
+            {
+                id: 'write_note',
+                category: '读书共成长活动系列',
+                name: '亲子共写一本笔记（有照片佐证）',
+                recordKey: '共写笔记次数',
+                points: 10,
+                unit: '学期',
+                limit: 'oncePerTerm' // 一学期内只能加一次
+            }
+        ];
+
+        // 构建 Excel 导入导出行（含各项目次数列）
+        function buildExcelRow(student) {
+            const row = {
+                '姓名': student.name,
+                '积分': student.points
+            };
+            activities.forEach(act => {
+                row[act.recordKey] = student.activityRecords?.[act.id] || 0;
+            });
+            return row;
+        }
+
+        // 规范化 Excel 行键名（去除表头空格）
+        function normalizeImportRow(row) {
+            const normalized = {};
+            Object.entries(row).forEach(([key, value]) => {
+                normalized[String(key).trim()] = value;
+            });
+            return normalized;
+        }
+
+        // 从行中读取家长姓名
+        function getParentNameFromRow(row) {
+            const keys = ['姓名', '家长姓名', 'name', 'Name', 'NAME'];
+            for (const key of keys) {
+                if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== '') {
+                    return String(row[key]).trim();
+                }
+            }
+            return '';
+        }
+
+        // 解析 Excel 中的数字
+        function parseImportNumber(value, defaultValue = 0) {
+            if (value === undefined || value === null || value === '') return defaultValue;
+            const num = Number(String(value).trim());
+            if (isNaN(num)) return defaultValue;
+            return Math.max(0, Math.floor(num));
+        }
+
+        // 从行中读取某加分项目的次数
+        function getActivityCountFromRow(row, act) {
+            const keys = [
+                act.recordKey,
+                act.id,
+                `${act.name}（次数）`,
+                `${act.name}(次数)`,
+                act.name
+            ];
+            for (const key of keys) {
+                if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== '') {
+                    return parseImportNumber(row[key], 0);
+                }
+            }
+            return 0;
+        }
+
+        // 根据加分次数重建历史记录
+        function rebuildHistoryFromRecords(activityRecords) {
+            const history = [];
+            Object.entries(activityRecords).forEach(([activityId, count]) => {
+                const activity = activities.find(a => a.id === activityId);
+                if (!activity) return;
+                for (let i = 0; i < count; i++) {
+                    history.push({ activityId, points: activity.points });
+                }
+            });
+            return history;
+        }
+
+        // 查找包含姓名列的工作表
+        function findDataWorksheet(workbook) {
+            const preferredNames = ['家长数据', '家长数据模板', 'Sheet1'];
+            for (const name of preferredNames) {
+                if (workbook.SheetNames.includes(name)) {
+                    const worksheet = workbook.Sheets[name];
+                    if (worksheetHasNameColumn(worksheet)) return worksheet;
+                }
+            }
+            for (const name of workbook.SheetNames) {
+                const worksheet = workbook.Sheets[name];
+                if (worksheetHasNameColumn(worksheet)) return worksheet;
+            }
+            return workbook.Sheets[workbook.SheetNames[0]];
+        }
+
+        function worksheetHasNameColumn(worksheet) {
+            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+            if (!rows.length) return false;
+            const header = rows[0].map(cell => String(cell).trim());
+            return header.some(cell => ['姓名', '家长姓名', 'name', 'Name'].includes(cell));
+        }
+
+        // 从导入行创建家长对象
+        function createStudentFromImportRow(row) {
+            const name = getParentNameFromRow(row);
+            if (!name) return null;
+
+            const points = parseImportNumber(
+                row['积分'] ?? row['分数'] ?? row['points'] ?? row['Points'],
+                0
+            );
+
+            const activityRecords = {};
+            activities.forEach(act => {
+                const count = getActivityCountFromRow(row, act);
+                if (count > 0) {
+                    activityRecords[act.id] = act.limit === 'oncePerTerm'
+                        ? Math.min(count, 1)
+                        : count;
+                }
+            });
+
+            return {
+                name,
+                points,
+                petImages: {
+                    egg: null,
+                    baby: null,
+                    growing: null,
+                    adult: null,
+                    beautiful: null
+                },
+                activityRecords,
+                history: rebuildHistoryFromRecords(activityRecords),
+                evidences: {}
+            };
+        }
+
+        // 从localStorage加载数据
+        function loadData() {
+            const savedData = localStorage.getItem('parentBadgeSystem');
+            if (savedData) {
+                try {
+                    students = JSON.parse(savedData);
+                    // 确保每个学生都有 petImages、activityRecords、history、evidences 字段（兼容旧数据）
+                    students.forEach(student => {
+                        if (!student.petImages) {
+                            student.petImages = {
+                                egg: null,
+                                baby: null,
+                                growing: null,
+                                adult: null,
+                                beautiful: null
+                            };
+                        }
+                        if (!student.activityRecords) {
+                            student.activityRecords = {};
+                        }
+                        if (!student.history) {
+                            student.history = [];
+                        }
+                        if (!student.evidences) {
+                            student.evidences = {};
+                        }
+                    });
+                } catch (e) {
+                    console.error("数据解析错误:", e);
+                    showNotification("数据加载失败，使用默认数据");
+                }
+            }
+        }
+        
+        // 保存数据到localStorage
+        function saveData() {
+            localStorage.setItem('parentBadgeSystem', JSON.stringify(students));
+        }
+        
+        // 初始化
+        function init() {
+            loadData();
+            renderStudents();
+            setupEventListeners();
+            updateStudentCount();
+        }
+        
+        // 更新家长人数
+        function updateStudentCount() {
+            const studentCount = document.getElementById('studentCount');
+            studentCount.textContent = `家长人数: ${students.length}`;
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 添加学生按钮
+            document.getElementById('addStudentBtn').addEventListener('click', addStudent);
+            
+            // 按Enter键添加学生
+            document.getElementById('studentName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addStudent();
+                }
+            });
+            
+            // 导入导出按钮
+            document.getElementById('importBtn').addEventListener('click', showImportModal);
+            document.getElementById('exportBtn').addEventListener('click', exportData);
+            document.getElementById('templateBtn').addEventListener('click', downloadTemplate);
+            document.getElementById('deleteAllBtn').addEventListener('click', confirmDeleteAll);
+            document.getElementById('resetPointsBtn').addEventListener('click', confirmResetPoints);
+            
+            // 导入模态框按钮
+            document.getElementById('confirmImportBtn').addEventListener('click', handleFileImport);
+            document.getElementById('cancelImportBtn').addEventListener('click', hideImportModal);
+            document.getElementById('closeImportModal').addEventListener('click', hideImportModal);
+            
+            // 删除模态框按钮
+            document.getElementById('confirmDeleteBtn').addEventListener('click', executeDelete);
+            document.getElementById('cancelDeleteBtn').addEventListener('click', hideDeleteModal);
+            document.getElementById('closeDeleteModal').addEventListener('click', hideDeleteModal);
+            
+            // 清空积分模态框按钮
+            document.getElementById('confirmResetPointsBtn').addEventListener('click', executeResetPoints);
+            document.getElementById('cancelResetPointsBtn').addEventListener('click', hideResetPointsModal);
+            document.getElementById('closeResetPointsModal').addEventListener('click', hideResetPointsModal);
+            
+            // 自定义模态框按钮
+            document.getElementById('cancelCustomizeBtn').addEventListener('click', hideCustomizeModal);
+            document.getElementById('closeCustomizeModal').addEventListener('click', hideCustomizeModal);
+
+            // 加分项目模态框按钮
+            document.getElementById('cancelActivityBtn').addEventListener('click', closeActivityModal);
+            document.getElementById('closeActivityModal').addEventListener('click', closeActivityModal);
+
+            // 佐证大图预览模态框按钮
+            document.getElementById('closeImagePreviewModal').addEventListener('click', closeImagePreview);
+            
+            // 点击模态框外部关闭模态框
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // 添加家长
+        function addStudent() {
+            const nameInput = document.getElementById('studentName');
+            const name = nameInput.value.trim();
+            
+            if (name === '') {
+                showNotification('请输入家长姓名！');
+                return;
+            }
+            
+            // 检查是否已存在同名家长
+            if (students.some(student => student.name === name)) {
+                showNotification('该家长已存在！');
+                return;
+            }
+            
+            // 添加新家长，包含 petImages 字段
+            students.push({
+                name: name,
+                points: 0,
+                petImages: {
+                    egg: null,
+                    baby: null,
+                    growing: null,
+                    adult: null,
+                    beautiful: null
+                },
+                activityRecords: {},
+                history: [],
+                evidences: {}
+            });
+            
+            nameInput.value = '';
+            saveData();
+            renderStudents();
+            updateStudentCount();
+            showNotification(`成功添加家长：${name}！`);
+        }
+        
+        // 打开家长加分项目选择模态框
+        function openAddPointsModal(index) {
+            currentActivityIndex = index;
+            const student = students[index];
+            const nameEl = document.getElementById('activityModalStudentName');
+            nameEl.textContent = `家长：${student.name}（当前积分：${student.points}）`;
+
+            renderActivityList();
+            document.getElementById('activityModal').style.display = 'flex';
+        }
+
+        // 关闭家长加分项目选择模态框
+        function closeActivityModal() {
+            document.getElementById('activityModal').style.display = 'none';
+            currentActivityIndex = -1;
+        }
+
+        // 渲染加分项目列表
+        function renderActivityList() {
+            const container = document.getElementById('activityListContainer');
+            container.innerHTML = '';
+
+            if (currentActivityIndex === -1) return;
+
+            const student = students[currentActivityIndex];
+            const records = student.activityRecords || {};
+
+            // 按类别分组
+            const grouped = {};
+            activities.forEach(act => {
+                if (!grouped[act.category]) grouped[act.category] = [];
+                grouped[act.category].push(act);
+            });
+
+            Object.keys(grouped).forEach(category => {
+                const title = document.createElement('div');
+                title.className = 'activity-section-title';
+                title.textContent = category;
+                container.appendChild(title);
+
+                const list = document.createElement('ul');
+                list.className = 'activity-list';
+
+                grouped[category].forEach(act => {
+                    const li = document.createElement('li');
+                    li.className = 'activity-item';
+
+                    const usedCount = records[act.id] || 0;
+                    const reachedLimit = act.limit === 'oncePerTerm' && usedCount >= 1;
+                    const evidences = (student.evidences && student.evidences[act.id]) || [];
+
+                    const info = document.createElement('div');
+                    info.className = 'activity-info';
+
+                    const nameEl = document.createElement('div');
+                    nameEl.className = 'activity-name';
+                    nameEl.textContent = `${act.name}（+${act.points}分/${act.unit}）`;
+
+                    const meta = document.createElement('div');
+                    meta.className = 'activity-meta';
+                    let limitText = act.limit === 'oncePerTerm'
+                        ? '每学期一次'
+                        : '可多次累计';
+                    const usedText = usedCount > 0
+                        ? `，已记录 ${usedCount} 次`
+                        : '';
+                    if (reachedLimit) {
+                        limitText += '，本学期已加分';
+                    }
+                    const evidenceText = evidences.length > 0
+                        ? `，已有 ${evidences.length} 张佐证`
+                        : '，暂无佐证';
+                    meta.textContent = `${limitText}${usedText}${evidenceText}`;
+
+                    info.appendChild(nameEl);
+                    info.appendChild(meta);
+
+                    const actions = document.createElement('div');
+                    actions.className = 'activity-actions';
+
+                    const addBtn = document.createElement('button');
+                    addBtn.className = 'activity-add-btn';
+                    addBtn.textContent = '加分';
+                    addBtn.disabled = reachedLimit;
+                    addBtn.addEventListener('click', () => applyActivityPoints(act.id));
+
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.className = 'activity-cancel-btn';
+                    cancelBtn.textContent = '取消一次';
+                    cancelBtn.disabled = usedCount === 0;
+                    cancelBtn.addEventListener('click', () => cancelActivityOnce(act.id));
+
+                    actions.appendChild(addBtn);
+                    actions.appendChild(cancelBtn);
+
+                    li.appendChild(info);
+                    li.appendChild(actions);
+                    list.appendChild(li);
+                });
+
+                container.appendChild(list);
+            });
+        }
+
+        // 应用某个加分项目
+        function applyActivityPoints(activityId) {
+            if (currentActivityIndex === -1) return;
+
+            const student = students[currentActivityIndex];
+            if (!student.activityRecords) {
+                student.activityRecords = {};
+            }
+            if (!student.history) {
+                student.history = [];
+            }
+            if (!student.evidences) {
+                student.evidences = {};
+            }
+
+            const activity = activities.find(a => a.id === activityId);
+            if (!activity) return;
+
+            const usedCount = student.activityRecords[activityId] || 0;
+
+            // 检查是否有足够的图片佐证（每张佐证仅支持加分一次）
+            const evidenceList = student.evidences[activityId] || [];
+            if (evidenceList.length === 0) {
+                showNotification(`请先在“积分佐证管理”中为项目“${activity.name}”上传至少一张图片佐证，再进行加分。`);
+                return;
+            }
+            if (evidenceList.length <= usedCount) {
+                showNotification(`项目“${activity.name}”的可用图片佐证已用完，请先上传新的佐证图片后再加分。`);
+                return;
+            }
+            if (activity.limit === 'oncePerTerm' && usedCount >= 1) {
+                showNotification(`该项目为“每学期一次”，${student.name}已获得过该项目加分。`);
+                renderActivityList();
+                return;
+            }
+
+            student.points += activity.points;
+            student.activityRecords[activityId] = usedCount + 1;
+
+            // 记录历史，用于撤销
+            student.history.push({
+                activityId: activity.id,
+                points: activity.points
+            });
+
+            saveData();
+            renderStudents();
+            renderActivityList();
+
+            // 阶段提醒
+            if (student.points === 5) {
+                showNotification(`为${student.name}添加“${activity.name}”+${activity.points}分，当前解锁【参与章】，总积分：${student.points}`);
+            } else if (student.points === 10) {
+                showNotification(`为${student.name}添加“${activity.name}”+${activity.points}分，当前解锁【协作章】，总积分：${student.points}`);
+            } else if (student.points === 20) {
+                showNotification(`为${student.name}添加“${activity.name}”+${activity.points}分，当前解锁【优秀家长章】，总积分：${student.points}`);
+            } else if (student.points === 50) {
+                showNotification(`为${student.name}添加“${activity.name}”+${activity.points}分，当前解锁【荣誉家长勋章】，总积分：${student.points}`);
+            } else {
+                showNotification(`为${student.name}添加“${activity.name}”+${activity.points}分，当前积分：${student.points}`);
+            }
+        }
+
+        // 按项目撤销一次加分（在加分选项里使用）
+        function cancelActivityOnce(activityId) {
+            if (currentActivityIndex === -1) return;
+
+            const student = students[currentActivityIndex];
+            if (!student.activityRecords) {
+                student.activityRecords = {};
+            }
+            if (!student.history) {
+                student.history = [];
+            }
+            if (!student.evidences) {
+                student.evidences = {};
+            }
+
+            const usedCount = student.activityRecords[activityId] || 0;
+            if (usedCount <= 0) {
+                const activityName = (activities.find(a => a.id === activityId) || {}).name || '该项目';
+                showNotification(`${student.name}在“${activityName}”暂无可取消的加分记录。`);
+                renderActivityList();
+                return;
+            }
+
+            const activity = activities.find(a => a.id === activityId);
+            if (!activity) return;
+
+            // 回退积分
+            student.points -= activity.points;
+            if (student.points < 0) student.points = 0;
+
+            // 回退该项目计数
+            student.activityRecords[activityId] = usedCount - 1;
+            if (student.activityRecords[activityId] <= 0) {
+                delete student.activityRecords[activityId];
+            }
+
+            // 同步删除一条对应的历史记录（从后往前找第一条）
+            for (let i = student.history.length - 1; i >= 0; i--) {
+                if (student.history[i].activityId === activityId) {
+                    student.history.splice(i, 1);
+                    break;
+                }
+            }
+
+            // 同步删除一张对应项目的图片佐证（从末尾开始）
+            if (student.evidences && student.evidences[activityId] && student.evidences[activityId].length > 0) {
+                student.evidences[activityId].pop();
+                if (student.evidences[activityId].length === 0) {
+                    delete student.evidences[activityId];
+                }
+            }
+
+            saveData();
+            renderStudents();
+            renderActivityList();
+
+            showNotification(`已为${student.name}取消“${activity.name}”一次，同时删除一张图片佐证，当前积分：${student.points}`);
+        }
+
+        // 删除某条图片佐证
+        function deleteEvidence(activityId, evidenceIndex) {
+            // 优先使用加分弹窗中的家长索引，其次使用佐证管理弹窗中的索引
+            const studentIndex = currentActivityIndex !== -1 ? currentActivityIndex : currentCustomizeIndex;
+            if (studentIndex === -1) return;
+
+            const student = students[studentIndex];
+            if (!student.evidences || !student.evidences[activityId]) return;
+
+            const list = student.evidences[activityId];
+            if (evidenceIndex < 0 || evidenceIndex >= list.length) return;
+
+            const activity = activities.find(a => a.id === activityId);
+            const name = activity ? activity.name : '该项目';
+
+            // 先删除一张图片佐证
+            list.splice(evidenceIndex, 1);
+            if (list.length === 0) {
+                delete student.evidences[activityId];
+            }
+
+            // 如果该项目已有加分记录，则同步撤销一次加分
+            if (activity && student.activityRecords && student.activityRecords[activityId] > 0) {
+                student.activityRecords[activityId] -= 1;
+                if (student.activityRecords[activityId] <= 0) {
+                    delete student.activityRecords[activityId];
+                }
+
+                student.points -= activity.points;
+                if (student.points < 0) student.points = 0;
+
+                // 删除一条对应的历史记录
+                if (student.history) {
+                    for (let i = student.history.length - 1; i >= 0; i--) {
+                        if (student.history[i].activityId === activityId) {
+                            student.history.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+
+                saveData();
+                renderStudents();
+                if (currentActivityIndex !== -1) {
+                    renderActivityList();
+                }
+                if (currentCustomizeIndex !== -1 && document.getElementById('customizeModal').style.display === 'flex') {
+                    renderEvidenceList();
+                }
+
+                showNotification(`已删除“${name}”的一张图片佐证，并同时取消一次该项目加分，当前积分：${student.points}`);
+                return;
+            }
+
+            saveData();
+            if (currentActivityIndex !== -1) {
+                renderActivityList();
+            }
+            if (currentCustomizeIndex !== -1 && document.getElementById('customizeModal').style.display === 'flex') {
+                renderEvidenceList();
+            }
+
+            showNotification(`已删除“${name}”的一张图片佐证`);
+        }
+
+        // 打开图片大图预览
+        function openImagePreview(src) {
+            const img = document.getElementById('previewEvidenceImage');
+            img.src = src;
+            document.getElementById('imagePreviewModal').style.display = 'flex';
+        }
+
+        // 关闭图片大图预览
+        function closeImagePreview() {
+            document.getElementById('imagePreviewModal').style.display = 'none';
+            const img = document.getElementById('previewEvidenceImage');
+            img.src = '';
+        }
+
+        // 撤销上一次加分
+        function cancelLastActivity(index) {
+            const student = students[index];
+            if (!student.history || student.history.length === 0) {
+                showNotification(`${student.name}暂无可撤销的加分记录。`);
+                return;
+            }
+
+            const last = student.history.pop();
+            const activity = activities.find(a => a.id === last.activityId);
+            const name = activity ? activity.name : '上一次加分';
+
+            // 回退积分
+            student.points -= last.points;
+            if (student.points < 0) student.points = 0;
+
+            // 回退活动计数
+            if (student.activityRecords && student.activityRecords[last.activityId]) {
+                student.activityRecords[last.activityId] -= 1;
+                if (student.activityRecords[last.activityId] <= 0) {
+                    delete student.activityRecords[last.activityId];
+                }
+            }
+
+            saveData();
+            renderStudents();
+            showNotification(`已为${student.name}撤销“${name}”一次，加分-${last.points}，当前积分：${student.points}`);
+        }
+        
+        // 删除家长
+        function deleteStudent(index) {
+            const studentName = students[index].name;
+            students.splice(index, 1);
+            saveData();
+            renderStudents();
+            updateStudentCount();
+            showNotification(`已删除家长：${studentName}`);
+        }
+        
+        // 确认删除家长
+        function confirmDeleteStudent(index) {
+            const studentName = students[index].name;
+            deleteType = 'student';
+            deleteIndex = index;
+            
+            document.getElementById('deleteModalTitle').textContent = '确认删除家长';
+            document.getElementById('deleteModalMessage').textContent = `您确定要删除家长 "${studentName}" 吗？此操作不可撤销。`;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+        
+        // 确认删除全部
+        function confirmDeleteAll() {
+            if (students.length === 0) {
+                showNotification('没有家长，无需删除！');
+                return;
+            }
+            
+            deleteType = 'all';
+            
+            document.getElementById('deleteModalTitle').textContent = '确认删除全部家长';
+            document.getElementById('deleteModalMessage').textContent = `您确定要删除所有家长吗？此操作不可撤销。`;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+        
+        // 确认清空积分
+        function confirmResetPoints() {
+            if (students.length === 0) {
+                showNotification('没有家长，无需清空积分！');
+                return;
+            }
+            
+            document.getElementById('resetPointsModalMessage').textContent = `您确定要清空所有家长的积分吗？所有家长积分将重置为0，此操作不可撤销。`;
+            document.getElementById('resetPointsModal').style.display = 'flex';
+        }
+        
+        // 执行删除操作
+        function executeDelete() {
+            if (deleteType === 'student') {
+                deleteStudent(deleteIndex);
+            } else if (deleteType === 'all') {
+                students = [];
+                saveData();
+                renderStudents();
+                updateStudentCount();
+                showNotification('已删除所有学生！');
+            }
+            
+            hideDeleteModal();
+        }
+        
+        // 执行清空积分操作
+        function executeResetPoints() {
+            // 将所有家长的积分重置为0
+            students.forEach(student => {
+                student.points = 0;
+            });
+            
+            saveData();
+            renderStudents();
+            hideResetPointsModal();
+            showNotification('已清空所有家长的积分！');
+        }
+        
+        // 获取勋章阶段
+        function getStage(points) {
+            if (points < 5) return 'egg';
+            if (points < 10) return 'baby';
+            if (points < 20) return 'growing';
+            if (points < 50) return 'adult';
+            return 'beautiful';
+        }
+        
+        // 获取勋章图标
+        function getPetIcon(stage, studentIndex) {
+            const student = students[studentIndex];
+            // 如果学生有自定义图片，使用图片
+            if (student && student.petImages && student.petImages[stage]) {
+                return `<img src="${student.petImages[stage]}" class="pet-image" alt="${stage}">`;
+            }
+            
+            // 否则使用默认的勋章图标
+            switch(stage) {
+                case 'egg': return '🥉';
+                case 'baby': return '🥈';
+                case 'growing': return '🥇';
+                case 'adult': return '🏅';
+                case 'beautiful': return '🏆';
+                default: return '🥉';
+            }
+        }
+        
+        // 获取阶段信息文本
+        function getStageInfo(stage, points) {
+            switch(stage) {
+                case 'egg': 
+                    return `距离解锁【参与章】还差${5 - points}分`;
+                case 'baby': 
+                    return `距离解锁【协作章】还差${10 - points}分`;
+                case 'growing': 
+                    return `距离解锁【进步章】还差${20 - points}分`;
+                case 'adult': 
+                    return `距离解锁【荣誉家长勋章】还差${50 - points}分`;
+                case 'beautiful': 
+                    return '已集齐全部荣誉章！';
+                default: 
+                    return '';
+            }
+        }
+        
+        // 计算进度百分比
+        function getProgressPercentage(stage, points) {
+            switch(stage) {
+                case 'egg': 
+                    return (points / 5) * 100;
+                case 'baby': 
+                    return ((points - 5) / 5) * 100;
+                case 'growing': 
+                    return ((points - 10) / 10) * 100;
+                case 'adult': 
+                    return ((points - 20) / 30) * 100;
+                case 'beautiful': 
+                    return 100;
+                default: 
+                    return 0;
+            }
+        }
+        
+        // 渲染学生列表
+        function renderStudents() {
+            const container = document.getElementById('studentsContainer');
+            
+            if (students.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="pet">🥚</div>
+                        <p>还没有家长，快添加第一位家长参与争章吧！</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            students.forEach((student, index) => {
+                const stage = getStage(student.points);
+                const petIcon = getPetIcon(stage, index);
+                const stageInfo = getStageInfo(stage, student.points);
+                const progressPercentage = getProgressPercentage(stage, student.points);
+                
+                const studentCard = document.createElement('div');
+                studentCard.className = `student-card ${stage}`;
+                studentCard.innerHTML = `
+                    <h3 class="student-name">${student.name}</h3>
+                    <div class="points">积分: ${student.points}</div>
+                    <div class="pet-container">
+                        <div class="pet">${petIcon}</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress ${stage}-progress" style="width: ${progressPercentage}%"></div>
+                    </div>
+                    <div class="stage-info">${stageInfo}</div>
+                    <div class="action-buttons">
+                        <button class="add-point-btn" onclick="openAddPointsModal(${index})">加分</button>
+                        <button class="add-point-btn customize" onclick="showCustomizeModal(${index})" style="flex: 0.5;">
+                            <i class="fas fa-images"></i>
+                        </button>
+                        <button class="delete-student-btn" onclick="confirmDeleteStudent(${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(studentCard);
+            });
+        }
+        
+        // 显示通知
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 显示导入模态框
+        function showImportModal() {
+            document.getElementById('importModal').style.display = 'flex';
+        }
+        
+        // 隐藏导入模态框
+        function hideImportModal() {
+            document.getElementById('importModal').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+        }
+        
+        // 隐藏删除模态框
+        function hideDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+            deleteType = '';
+            deleteIndex = -1;
+        }
+        
+        // 隐藏清空积分模态框
+        function hideResetPointsModal() {
+            document.getElementById('resetPointsModal').style.display = 'none';
+        }
+        
+        // 显示积分佐证模态框
+        function showCustomizeModal(index) {
+            currentCustomizeIndex = index;
+            const student = students[index];
+
+            document.getElementById('customizeModalTitle').textContent = `积分佐证管理`;
+            document.getElementById('customizeModalStudentName').textContent = `家长：${student.name}`;
+
+            renderEvidenceList();
+            document.getElementById('customizeModal').style.display = 'flex';
+        }
+        
+        // 隐藏积分佐证模态框
+        function hideCustomizeModal() {
+            document.getElementById('customizeModal').style.display = 'none';
+            currentCustomizeIndex = -1;
+        }
+        
+        // 处理文件导入
+        function handleFileImport() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showNotification('请选择要导入的文件！');
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const worksheet = findDataWorksheet(workbook);
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
+                    
+                    const imported = [];
+                    let skippedCount = 0;
+                    
+                    jsonData.forEach(rawRow => {
+                        const row = normalizeImportRow(rawRow);
+                        const student = createStudentFromImportRow(row);
+                        
+                        if (!student) return;
+                        
+                        if (imported.some(item => item.name === student.name)) {
+                            skippedCount++;
+                            return;
+                        }
+                        
+                        imported.push(student);
+                    });
+                    
+                    if (imported.length === 0) {
+                        showNotification('未识别到有效家长数据，请检查表头是否包含“姓名”列');
+                        return;
+                    }
+                    
+                    students = imported;
+                    saveData();
+                    renderStudents();
+                    updateStudentCount();
+                    hideImportModal();
+                    
+                    let message = `成功导入 ${imported.length} 位家长数据`;
+                    if (skippedCount > 0) {
+                        message += `，跳过 ${skippedCount} 条重复记录`;
+                    }
+                    showNotification(message);
+                } catch (error) {
+                    console.error('导入错误:', error);
+                    showNotification('文件导入失败，请检查文件格式！');
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // 渲染积分佐证列表
+        function renderEvidenceList() {
+            const container = document.getElementById('evidenceListContainer');
+            container.innerHTML = '';
+
+            if (currentCustomizeIndex === -1) return;
+
+            const student = students[currentCustomizeIndex];
+            if (!student.evidences) {
+                student.evidences = {};
+            }
+
+            // 按类别分组，与活动列表一致
+            const grouped = {};
+            activities.forEach(act => {
+                if (!grouped[act.category]) grouped[act.category] = [];
+                grouped[act.category].push(act);
+            });
+
+            Object.keys(grouped).forEach(category => {
+                const title = document.createElement('div');
+                title.className = 'activity-section-title';
+                title.textContent = category;
+                container.appendChild(title);
+
+                const list = document.createElement('ul');
+                list.className = 'activity-list';
+
+                grouped[category].forEach(act => {
+                    const li = document.createElement('li');
+                    li.className = 'activity-item';
+
+                    const evidences = student.evidences[act.id] || [];
+
+                    const info = document.createElement('div');
+                    info.className = 'activity-info';
+
+                    const nameEl = document.createElement('div');
+                    nameEl.className = 'activity-name';
+                    nameEl.textContent = act.name;
+
+                    const meta = document.createElement('div');
+                    meta.className = 'activity-meta';
+                    const count = evidences.length;
+                    meta.textContent = count > 0
+                        ? `已上传 ${count} 张图片佐证`
+                        : '尚未上传图片佐证';
+
+                    info.appendChild(nameEl);
+                    info.appendChild(meta);
+
+                    const actions = document.createElement('div');
+                    actions.className = 'activity-actions';
+
+                    const uploadInput = document.createElement('input');
+                    uploadInput.type = 'file';
+                    uploadInput.accept = 'image/*';
+                    uploadInput.multiple = true;
+                    uploadInput.style.display = 'none';
+
+                    const uploadBtn = document.createElement('button');
+                    uploadBtn.className = 'activity-add-btn';
+                    uploadBtn.textContent = '上传佐证';
+
+                    uploadBtn.addEventListener('click', () => uploadInput.click());
+
+                    uploadInput.addEventListener('change', (event) => {
+                        const files = Array.from(event.target.files || []);
+                        if (files.length === 0) return;
+
+                        let processed = 0;
+                        files.forEach(file => {
+                            if (!file.type.match('image.*')) {
+                                return;
+                            }
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                if (!student.evidences[act.id]) {
+                                    student.evidences[act.id] = [];
+                                }
+                                student.evidences[act.id].push(e.target.result);
+                                processed++;
+                                if (processed === files.length) {
+                                    saveData();
+                                    renderEvidenceList();
+                                    showNotification(`已为“${act.name}”上传 ${files.length} 张图片佐证`);
+                                }
+                            };
+                            reader.readAsDataURL(file);
+                        });
+
+                        // 清空 input，方便下次继续上传
+                        event.target.value = '';
+                    });
+
+                    actions.appendChild(uploadBtn);
+                    actions.appendChild(uploadInput);
+
+                    li.appendChild(info);
+                    li.appendChild(actions);
+
+                    // 缩略图区域
+                    const evContainer = document.createElement('div');
+                    evContainer.className = 'activity-evidences';
+
+                    evidences.forEach((src, idx) => {
+                        const thumb = document.createElement('div');
+                        thumb.className = 'evidence-thumb';
+
+                        const img = document.createElement('img');
+                        img.src = src;
+                        img.alt = '佐证缩略图';
+                        img.addEventListener('click', () => openImagePreview(src));
+
+                        const del = document.createElement('div');
+                        del.className = 'evidence-delete';
+                        del.textContent = '×';
+                        del.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            deleteEvidence(act.id, idx);
+                        });
+
+                        thumb.appendChild(img);
+                        thumb.appendChild(del);
+                        evContainer.appendChild(thumb);
+                    });
+
+                    li.appendChild(evContainer);
+                    list.appendChild(li);
+                });
+
+                container.appendChild(list);
+            });
+        }
+        
+        // 导出数据
+        function exportData() {
+            if (students.length === 0) {
+                showNotification('没有家长数据可导出！');
+                return;
+            }
+            
+            const excelData = students.map(student => buildExcelRow(student));
+            
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, '家长数据');
+            
+            const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+            const dataBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(dataBlob);
+            downloadLink.download = `家长争章积分系统数据_${new Date().toISOString().split('T')[0]}.xlsx`;
+            
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            
+            showNotification('数据导出成功！');
+        }
+        
+        // 下载Excel模板
+        function downloadTemplate() {
+            const templateData = [
+                buildExcelRow({
+                    name: '张爸爸',
+                    points: 15,
+                    activityRecords: {
+                        parent_meeting: 1,
+                        safety_guard: 2
+                    }
+                }),
+                buildExcelRow({
+                    name: '李妈妈',
+                    points: 10,
+                    activityRecords: {
+                        read_book: 1
+                    }
+                }),
+                buildExcelRow({
+                    name: '王爸爸',
+                    points: 0,
+                    activityRecords: {}
+                })
+            ];
+            
+            const worksheet = XLSX.utils.json_to_sheet(templateData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, '家长数据模板');
+            
+            const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+            const dataBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(dataBlob);
+            downloadLink.download = '家长争章积分系统模板.xlsx';
+            
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            
+            showNotification('模板下载成功！');
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html>
